@@ -2,9 +2,11 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-For 1.2.2 release and previous ones, this is a copy/paste from FredericRP's Standard Assets changelog, filtered for this sub package (that's why some version have no content here).
+**For 1.2.2 release and previous ones, this is a copy/paste from FredericRP's Standard Assets changelog, filtered for this sub package (that's why some version have no content here).**
 
 ## Unreleased
+
+## [1.3.0] - 2021-09-15
 
 ### Added
 - Ability to use prefab directly from popup descriptor, and custom editor
@@ -12,6 +14,7 @@ For 1.2.2 release and previous ones, this is a copy/paste from FredericRP's Stan
 - Close function from popup to be able to link unity events from a popup gameobject
 
 ### Changed
+- Use its own repository
 - Do not use GUIDs for assembly references to make it clearer if an assembly is not found
 
 ### Fixed
