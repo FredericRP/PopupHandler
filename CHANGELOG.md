@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Fixed
+- closing a chain of popups was broken: the current popup was not reset to the previous one (still has to be optimized though)
+
 ## [1.3.0] - 2021-09-15
 
 ### Added

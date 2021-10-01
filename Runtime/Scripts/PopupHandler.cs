@@ -1,8 +1,8 @@
-﻿using UnityEngine;
+﻿using FredericRP.GenericSingleton;
+using FredericRP.ObjectPooling;
 using System.Collections;
 using System.Collections.Generic;
-using FredericRP.ObjectPooling;
-using FredericRP.GenericSingleton;
+using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -20,16 +20,19 @@ namespace FredericRP.Popups
 
     ObjectPool objectPool;
 
-    private static List<PopupBase> popupList = new List<PopupBase>();
+    [System.Serializable]
+    class PopupPair
+    {
+      public PopupBase popupBase;
+      public PopupDescriptor descriptor;
+    }
+
+    private static List<PopupPair> popupList = new List<PopupPair>();
 
     /// <summary>
-    /// The current popup descriptor, used to determine if a new popup should be shown
+    /// The current popup pair: object link and descriptor, used to determine if a new popup should be shown
     /// </summary>
-    PopupDescriptor currentPopupDescriptor;
-    /// <summary>
-    /// The current popup base component
-    /// </summary>
-    PopupBase currentPopup;
+    PopupPair currentPopupPair;
 
     void Start()
     {
@@ -105,10 +108,10 @@ namespace FredericRP.Popups
     public void ShowPopup(PopupDescriptor popup, object parameters)
     {
 #if UNITY_EDITOR && DEBUG
-      Debug.Log("Show popup " + popup + " / current: " + currentPopupDescriptor);
+      Debug.Log("Show popup " + popup + " / current: " + currentPopupPair?.descriptor);
 #endif
       // If current popup is the same as the current shown one, with the same parameters, do nothing
-      if (currentPopupDescriptor != null && currentPopupDescriptor.pooledObjectName == popup.pooledObjectName && (currentPopup != null && CheckParameterEquals(currentPopup.Parameters, parameters)))
+      if (currentPopupPair != null && currentPopupPair.descriptor != null && currentPopupPair.descriptor.pooledObjectName == popup.pooledObjectName && (currentPopupPair.popupBase != null && CheckParameterEquals(currentPopupPair.popupBase.Parameters, parameters)))
       {
 #if UNITY_EDITOR && DEBUG
         Debug.Log("Already showing with same parameters, abort !");
@@ -125,20 +128,22 @@ namespace FredericRP.Popups
       Debug.Log("Retrieved " + popup.pooledObjectName + " => " + popupObject.name);
 #endif
       // ensure new popup is above previous one
-      if (currentPopup != null)
-        popupObject.Canvas.sortingOrder = currentPopup.Canvas.sortingOrder + 1;
+      if (currentPopupPair?.popupBase != null)
+        popupObject.Canvas.sortingOrder = currentPopupPair.popupBase.Canvas.sortingOrder + 1;
       else
         popupObject.Canvas.sortingOrder = defaultSortingLayer;
       // Initialize the new popup with specified parameters
       popupObject.Init(parameters);
 
       // Show the new popup
-      currentPopupDescriptor = popup;
-      currentPopup = popupObject;
       popupObject.Show();
 
       // Add it to the list
-      popupList.Add(popupObject);
+      PopupPair newPair = new PopupPair();
+      newPair.descriptor = popup;
+      newPair.popupBase = popupObject;
+      currentPopupPair = newPair;
+      popupList.Add(newPair);
     }
 
     public static void ClosePopup()
@@ -148,8 +153,7 @@ namespace FredericRP.Popups
 
     private IEnumerator _closePopup()
     {
-      bool poolPopup = currentPopupDescriptor.popupSource == PopupDescriptor.PopupSource.Pool;
-      currentPopupDescriptor = null;
+      bool poolPopup = currentPopupPair.descriptor.popupSource == PopupDescriptor.PopupSource.Pool;
       int lastPopupIndex = popupList.Count - 1;
       if (HideLastPopup())
       {
@@ -157,24 +161,25 @@ namespace FredericRP.Popups
         yield return new WaitForSeconds(delayBetweenPopupAnimation);
 
         if (poolPopup)
-          objectPool.Pool(popupList[lastPopupIndex].gameObject);
+          objectPool.Pool(popupList[lastPopupIndex].popupBase.gameObject);
         else
-          Destroy(currentPopup);
+          Destroy(currentPopupPair.popupBase.gameObject);
         popupList.RemoveAt(lastPopupIndex);
-
-        if (popupList.Count > 0)
-          popupList[popupList.Count - 1].Show();
       }
       else if (popupList.Count > 0)
       {
         // If we're here, that means there was no popup or the last popup was already hidden
-        objectPool.Pool(popupList[lastPopupIndex].gameObject);
+        objectPool.Pool(popupList[lastPopupIndex].popupBase.gameObject);
         popupList.RemoveAt(lastPopupIndex);
 
-        if (popupList.Count > 0)
-          popupList[popupList.Count - 1].Show();
       }
-      currentPopup = null;
+      if (popupList.Count > 0)
+      {
+        currentPopupPair = popupList[popupList.Count - 1];
+        popupList[popupList.Count - 1].popupBase.Show();
+      }
+      else
+        currentPopupPair = null;
     }
 
     /// <summary>
@@ -189,13 +194,13 @@ namespace FredericRP.Popups
     {
       for (int i = popupList.Count - 1; i >= 0; i--)
       {
-        if (popupList[i].IsVisible)
+        if (popupList[i].popupBase.IsVisible)
         {
-          popupList[i].Hide();
+          popupList[i].popupBase.Hide();
           yield return new WaitForSeconds(delayBetweenPopupAnimation);
         }
 
-        objectPool.Pool(popupList[i].gameObject);
+        objectPool.Pool(popupList[i].popupBase.gameObject);
       }
 
       popupList.Clear();
@@ -210,7 +215,7 @@ namespace FredericRP.Popups
       PopupBase lastPopup = null;
 
       if (popupList.Count > 0)
-        lastPopup = popupList[popupList.Count - 1];
+        lastPopup = popupList[popupList.Count - 1].popupBase;
 
       if (lastPopup != null && lastPopup.IsVisible)
       {
