@@ -85,7 +85,7 @@ namespace FredericRP.Popups
       object[] newArray = (newParameters as object[]);
       object[] oldArray = (oldParameters as object[]);
       // If array have not the same length, it's different
-      if (newArray.Length != oldArray.Length)
+      if (newArray?.Length != oldArray?.Length)
         return false;
       for (int i = 0; i < newArray.Length; i++)
       {
