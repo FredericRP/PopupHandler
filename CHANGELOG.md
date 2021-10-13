@@ -6,8 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [1.3.1] - 2021-10-13
+
 ### Fixed
 - closing a chain of popups was broken: the current popup was not reset to the previous one (still has to be optimized though)
+- fix when one parameter is an array and the other is null
 
 ## [1.3.0] - 2021-09-15
 
