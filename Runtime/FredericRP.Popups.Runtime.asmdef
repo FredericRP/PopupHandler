@@ -3,7 +3,8 @@
     "rootNamespace": "",
     "references": [
         "FredericRP.ObjectPool.Runtime",
-        "FredericRP.Singleton.Runtime"
+        "FredericRP.Singleton.Runtime",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
